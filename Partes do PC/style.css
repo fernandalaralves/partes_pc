@@ -1,0 +1,33 @@
+.image-container {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.image-container:hover {
+    transform: scale(1.05);
+}
+
+.image-container::after {
+    content: attr(data-name) " - " attr(data-description);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.8);
+    color: #000;
+    padding: 10px;
+    font-size: 14px;
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-container:hover::after {
+    opacity: 1;
+}
+
+footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}

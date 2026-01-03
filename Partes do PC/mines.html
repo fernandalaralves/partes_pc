@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Minesweeper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #game {
+            display: grid;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            background-color: #ddd;
+            user-select: none;
+        }
+        .cell.revealed {
+            background-color: #fff;
+            cursor: default;
+        }
+        .cell.mine {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="partes.html">Voltar</a>
+        </nav>
+    </header>
+
+    <div class="container text-center mt-4">
+        <h1>Campo Minado</h1>
+        <div id="game"></div>
+        <button class="btn btn-primary mt-3" id="restartBtn">Reiniciar</button>
+        <p id="status" class="mt-2"></p>
+    </div>
+
+    <script>
+        const rows = 8;
+        const cols = 8;
+        const minesCount = 10;
+        let board = [];
+        let revealedCount = 0;
+        let gameOver = false;
+
+        const gameDiv = document.getElementById("game");
+        const statusDiv = document.getElementById("status");
+        const restartBtn = document.getElementById("restartBtn");
+
+        function initGame() {
+            board = [];
+            revealedCount = 0;
+            gameOver = false;
+            statusDiv.textContent = "";
+            gameDiv.innerHTML = "";
+            gameDiv.style.gridTemplateColumns = `repeat(${cols}, 40px)`;
+
+            // Inicializa tabuleiro
+            for (let r = 0; r < rows; r++) {
+                board[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    board[r][c] = { mine: false, revealed: false, adjacent: 0 };
+                }
+            }
+
+            // Coloca minas
+            let placed = 0;
+            while (placed < minesCount) {
+                let r = Math.floor(Math.random() * rows);
+                let c = Math.floor(Math.random() * cols);
+                if (!board[r][c].mine) {
+                    board[r][c].mine = true;
+                    placed++;
+                }
+            }
+
+            // Calcula números adjacentes
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (!board[r][c].mine) {
+                        board[r][c].adjacent = countAdjacentMines(r, c);
+                    }
+                }
+            }
+
+            // Cria células no DOM
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement("div");
+                    cell.classList.add("cell");
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.addEventListener("click", () => revealCell(r, c));
+                    gameDiv.appendChild(cell);
+                }
+            }
+        }
+
+        function countAdjacentMines(r, c) {
+            let count = 0;
+            for (let i = r-1; i <= r+1; i++) {
+                for (let j = c-1; j <= c+1; j++) {
+                    if (i >= 0 && i < rows && j >= 0 && j < cols) {
+                        if (board[i][j].mine) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function revealCell(r, c) {
+            if (gameOver || board[r][c].revealed) return;
+
+            const cellDiv = document.querySelector(`.cell[data-row='${r}'][data-col='${c}']`);
+            board[r][c].revealed = true;
+            cellDiv.classList.add("revealed");
+
+            if (board[r][c].mine) {
+                cellDiv.textContent = "💣";
+                cellDiv.classList.add("mine");
+                endGame(false);
+                return;
+            }
+
+            revealedCount++;
+            if (board[r][c].adjacent > 0) {
+                cellDiv.textContent = board[r][c].adjacent;
+            } else {
+                for (let i = r-1; i <= r+1; i++) {
+                    for (let j = c-1; j <= c+1; j++) {
+                        if (i >= 0 && i < rows && j >= 0 && j < cols) {
+                            revealCell(i, j);
+                        }
+                    }
+                }
+            }
+
+            if (revealedCount === rows*cols - minesCount) {
+                endGame(true);
+            }
+        }
+
+        function endGame(win) {
+            gameOver = true;
+            if (win) {
+                statusDiv.textContent = "Parabéns! Você venceu!";
+                statusDiv.style.color = "green";
+            } else {
+                statusDiv.textContent = "Você perdeu! 💥";
+                statusDiv.style.color = "red";
+                // Revela todas as minas
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (board[r][c].mine) {
+                            const cellDiv = document.querySelector(`.cell[data-row='${r}'][data-col='${c}']`);
+                            cellDiv.textContent = "💣";
+                            cellDiv.classList.add("mine", "revealed");
+                        }
+                    }
+                }
+            }
+        }
+
+        restartBtn.addEventListener("click", initGame);
+
+        initGame();
+    </script>
+</body>
+</html>
